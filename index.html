@@ -180,6 +180,10 @@
       background: #fff1f2;
       border-color: #fecdd3;
     }
+    .fx-grid { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; }
+    .fx-grid input { width:100%; border:1px solid #cbd5e1; border-radius:14px; padding:13px 14px; font:inherit; font-size:1.08rem; background:white; color:#0f172a; }
+    .fx-grid input:focus { outline:4px solid rgba(37,99,235,.12); border-color:#2563eb; }
+    .fx-unit { font-weight:800; color:#475569; white-space:nowrap; }
     .toast {
       position: fixed;
       left: 50%;
@@ -228,11 +232,21 @@
       </div>
 
       <div class="chips">
-        <button class="chip" data-example="8億">8億</button>
-        <button class="chip" data-example="800 million">800 million</button>
+        <button class="chip" data-example="8億円">8億円</button>
+        <button class="chip" data-example="800 million USD">800 million USD</button>
         <button class="chip" data-example="2.5 billion">2.5 billion</button>
         <button class="chip" data-example="1.2兆">1.2兆</button>
       </div>
+    </section>
+
+
+    <section class="panel">
+      <label for="fxRate">為替換算（1 USD = 何円）</label>
+      <div class="fx-grid">
+        <input id="fxRate" type="number" inputmode="decimal" min="0.01" step="0.01" value="145" aria-label="1米ドルあたりの円">
+        <span class="fx-unit">円 / USD</span>
+      </div>
+      <p class="note" style="margin-top:10px;">為替レートは手動入力です。例：145を入力すると、1 USD = 145円として計算します。</p>
     </section>
 
     <section class="panel">
@@ -249,8 +263,8 @@
 
     <section class="panel">
       <p class="note">
-        対応例：8億 → 800 million、12億5,000万 → 1.25 billion、
-        800 million → 8億、2.5 billion → 25億。<br>
+        対応例：8億円 → US$5.5M（145円/USD）、12億5,000万 → 1.25 billion、
+        800 million USD → 1,160億円（145円/USD）、2.5 billion → 25億。<br>
         $, ¥, 円、カンマ、bn、mn、tn、kにも対応しています。
       </p>
     </section>
@@ -360,8 +374,31 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove("show"), 1400);
 }
 
+
+function detectCurrency(text) {
+  const lower = normalizeDigits(text).toLowerCase();
+  const hasJPY = /円|¥|￥|jpy/.test(lower);
+  const hasUSD = /\$|usd|us\$/.test(lower);
+  if (hasJPY && !hasUSD) return "JPY";
+  if (hasUSD && !hasJPY) return "USD";
+  return null;
+}
+
+function formatUSD(value) {
+  const abs = Math.abs(value);
+  if (abs >= 1e9) return `US$${compactNumber(value / 1e9)}B`;
+  if (abs >= 1e6) return `US$${compactNumber(value / 1e6)}M`;
+  if (abs >= 1e3) return `US$${compactNumber(value / 1e3)}K`;
+  return `US$${compactNumber(value)}`;
+}
+
+function formatJPY(value) {
+  return `${formatJapanese(value)}円`;
+}
+
 function convert() {
   const input = document.getElementById("input").value.trim();
+  const rate = Number(document.getElementById("fxRate").value);
   const result = document.getElementById("result");
   const main = document.getElementById("mainResult");
   const detail = document.getElementById("detail");
@@ -392,19 +429,42 @@ function convert() {
     lastMain = "";
     lastDetail = "";
     main.textContent = "変換できませんでした";
-    detail.textContent = "例：8億、12億5000万、800 million、2.5 billion";
+    detail.textContent = "例：8億円、US$55M、800 million USD、2.5 billion";
     return;
   }
 
+  const currency = detectCurrency(input);
   const japanese = formatJapanese(value);
   const english = formatEnglish(value);
   const exact = value.toLocaleString("en-US", { maximumFractionDigits: 10 });
 
-  if (direction === "jp") lastMain = english;
-  else if (direction === "en") lastMain = japanese;
-  else lastMain = `${japanese} / ${english}`;
+  if (currency === "JPY") {
+    if (!Number.isFinite(rate) || rate <= 0) {
+      result.classList.add("error");
+      main.textContent = "為替レートを確認してください";
+      detail.textContent = "1 USDあたりの円を正の数で入力してください。";
+      return;
+    }
+    const usd = value / rate;
+    lastMain = formatUSD(usd);
+    lastDetail = `${formatJPY(value)} ＝ ${formatUSD(usd)}（1 USD = ${compactNumber(rate)}円）`;
+  } else if (currency === "USD") {
+    if (!Number.isFinite(rate) || rate <= 0) {
+      result.classList.add("error");
+      main.textContent = "為替レートを確認してください";
+      detail.textContent = "1 USDあたりの円を正の数で入力してください。";
+      return;
+    }
+    const jpy = value * rate;
+    lastMain = formatJPY(jpy);
+    lastDetail = `${formatUSD(value)} ＝ ${formatJPY(jpy)}（1 USD = ${compactNumber(rate)}円）`;
+  } else {
+    if (direction === "jp") lastMain = english;
+    else if (direction === "en") lastMain = japanese;
+    else lastMain = `${japanese} / ${english}`;
+    lastDetail = `${japanese} ＝ ${exact} ＝ ${english}`;
+  }
 
-  lastDetail = `${japanese} ＝ ${exact} ＝ ${english}`;
   main.textContent = lastMain;
   detail.textContent = lastDetail;
 }
@@ -443,6 +503,7 @@ document.querySelectorAll(".chip").forEach(btn => {
 });
 
 document.getElementById("input").addEventListener("input", convert);
+document.getElementById("fxRate").addEventListener("input", convert);
 document.getElementById("input").addEventListener("keydown", e => {
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") convert();
 });
