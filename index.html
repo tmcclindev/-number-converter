@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="数字変換" />
+  
+  
+  <title>日英 数字単位コンバーター</title>
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans",
+        "Yu Gothic", Meiryo, sans-serif;
+      color: #0f172a;
+      background: #eef2f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,.12), transparent 35%),
+        radial-gradient(circle at top right, rgba(14,165,233,.12), transparent 30%),
+        #eef2f7;
+      padding: max(18px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .app {
+      width: min(720px, 100%);
+      margin: 0 auto;
+    }
+    .hero {
+      background: linear-gradient(135deg, #0f172a, #1e3a8a);
+      color: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, .18);
+      margin-bottom: 16px;
+    }
+    .eyebrow {
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      opacity: .75;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: clamp(1.6rem, 6vw, 2.35rem);
+      margin: 7px 0 8px;
+      line-height: 1.15;
+    }
+    .hero p {
+      margin: 0;
+      opacity: .86;
+      line-height: 1.6;
+    }
+    .panel {
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: 0 12px 35px rgba(15, 23, 42, .08);
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-weight: 800;
+      margin-bottom: 9px;
+    }
+    .input-wrap { position: relative; }
+    textarea {
+      width: 100%;
+      min-height: 112px;
+      resize: vertical;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 16px;
+      padding-right: 52px;
+      font: inherit;
+      font-size: 1.12rem;
+      line-height: 1.5;
+      background: white;
+      color: #0f172a;
+    }
+    textarea:focus {
+      outline: 4px solid rgba(37, 99, 235, .12);
+      border-color: #2563eb;
+    }
+    .icon-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 12px;
+      background: #eef2ff;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    button {
+      font: inherit;
+      font-weight: 800;
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 14px;
+      cursor: pointer;
+    }
+    .primary {
+      background: #2563eb;
+      color: white;
+      grid-column: 1 / -1;
+      box-shadow: 0 7px 18px rgba(37, 99, 235, .25);
+    }
+    .secondary { background: #e8eef8; color: #1e293b; }
+    .ghost { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+    .result {
+      padding: 18px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #eff6ff, #f8fbff);
+      border: 1px solid #bfdbfe;
+    }
+    .result-label {
+      color: #64748b;
+      font-weight: 800;
+      font-size: .8rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .main-result {
+      font-size: clamp(1.75rem, 7vw, 2.7rem);
+      font-weight: 900;
+      margin-top: 8px;
+      word-break: break-word;
+      line-height: 1.15;
+    }
+    .detail {
+      margin-top: 12px;
+      color: #475569;
+      line-height: 1.65;
+      word-break: break-word;
+    }
+    .copy-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .copy-row button { flex: 1; }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .chip {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      padding: 8px 11px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .note {
+      color: #64748b;
+      font-size: .92rem;
+      line-height: 1.6;
+      margin: 0;
+    }
+    .error {
+      background: #fff1f2;
+      border-color: #fecdd3;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(20px);
+      background: #0f172a;
+      color: white;
+      padding: 11px 15px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+      font-weight: 800;
+      z-index: 20;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (max-width: 420px) {
+      .actions { grid-template-columns: 1fr; }
+      .primary { grid-column: auto; }
+      .copy-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <div class="eyebrow">Japanese ⇄ English</div>
+      <h1>数字単位コンバーター</h1>
+      <p>「億・兆」と「million・billion・trillion」を、すばやく双方向変換します。</p>
+    </section>
+
+    <section class="panel">
+      <label for="input">数字を入力</label>
+      <div class="input-wrap">
+        <textarea id="input" placeholder="例：8億、800 million、$1.2 billion"></textarea>
+        <button class="icon-button" id="voice" aria-label="音声入力">🎙️</button>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="convert">変換する</button>
+        <button class="secondary" id="paste">貼り付け</button>
+        <button class="ghost" id="clear">クリア</button>
+      </div>
+
+      <div class="chips">
+        <button class="chip" data-example="8億">8億</button>
+        <button class="chip" data-example="800 million">800 million</button>
+        <button class="chip" data-example="2.5 billion">2.5 billion</button>
+        <button class="chip" data-example="1.2兆">1.2兆</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="result" id="result">
+        <div class="result-label">変換結果</div>
+        <div class="main-result" id="mainResult">入力してください</div>
+        <div class="detail" id="detail"></div>
+        <div class="copy-row">
+          <button class="secondary" id="copyMain">結果をコピー</button>
+          <button class="ghost" id="copyDetail">詳細をコピー</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <p class="note">
+        対応例：8億 → 800 million、12億5,000万 → 1.25 billion、
+        800 million → 8億、2.5 billion → 25億。<br>
+        $, ¥, 円、カンマ、bn、mn、tn、kにも対応しています。
+      </p>
+    </section>
+  </div>
+
+  <div class="toast" id="toast">コピーしました</div>
+
+<script>
+const jpUnits = { "兆": 1e12, "億": 1e8, "万": 1e4 };
+const enUnits = {
+  "trillion": 1e12, "trillions": 1e12, "tn": 1e12, "t": 1e12,
+  "billion": 1e9, "billions": 1e9, "bn": 1e9, "b": 1e9,
+  "million": 1e6, "millions": 1e6, "mn": 1e6, "m": 1e6,
+  "thousand": 1e3, "thousands": 1e3, "k": 1e3
+};
+
+function normalizeDigits(str) {
+  return str.replace(/[０-９．，]/g, ch => {
+    const map = "０１２３４５６７８９．，";
+    const repl = "0123456789.,";
+    return repl[map.indexOf(ch)];
+  });
+}
+
+function parseJapanese(text) {
+  const normalized = normalizeDigits(text).replace(/[,\s円¥￥]/g, "");
+  if (!/[万億兆]/.test(normalized)) return null;
+
+  let total = 0;
+  let matched = "";
+  const pattern = /([+-]?\d*\.?\d+)(兆|億|万)/g;
+  let match;
+  while ((match = pattern.exec(normalized)) !== null) {
+    total += Number(match[1]) * jpUnits[match[2]];
+    matched += match[0];
+  }
+
+  const rest = normalized.replace(pattern, "");
+  if (rest && /^[+-]?\d*\.?\d+$/.test(rest)) total += Number(rest);
+  return matched ? total : null;
+}
+
+function parseEnglish(text) {
+  let normalized = normalizeDigits(text)
+    .toLowerCase()
+    .replace(/[$¥￥,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Friendly correction for a likely shorthand/typo such as "800ion".
+  normalized = normalized.replace(/^([+-]?\d*\.?\d+)\s*ion$/, "$1 million");
+
+  const match = normalized.match(
+    /([+-]?\d*\.?\d+)\s*(trillions?|billions?|millions?|thousands?|tn|bn|mn|[tbmk])\b/i
+  );
+  if (!match) return null;
+  return Number(match[1]) * enUnits[match[2].toLowerCase()];
+}
+
+function parsePlainNumber(text) {
+  const normalized = normalizeDigits(text).replace(/[$円¥￥,\s]/g, "");
+  if (/^[+-]?\d*\.?\d+$/.test(normalized)) return Number(normalized);
+  return null;
+}
+
+function compactNumber(num, digits = 6) {
+  return Number(num.toFixed(digits)).toLocaleString("en-US", {
+    maximumFractionDigits: digits
+  });
+}
+
+function formatEnglish(value) {
+  const abs = Math.abs(value);
+  if (abs >= 1e12) return `${compactNumber(value / 1e12)} trillion`;
+  if (abs >= 1e9) return `${compactNumber(value / 1e9)} billion`;
+  if (abs >= 1e6) return `${compactNumber(value / 1e6)} million`;
+  if (abs >= 1e3) return `${compactNumber(value / 1e3)} thousand`;
+  return compactNumber(value);
+}
+
+function formatJapanese(value) {
+  const sign = value < 0 ? "-" : "";
+  let n = Math.abs(value);
+  if (n === 0) return "0";
+
+  const parts = [];
+  const cho = Math.floor(n / 1e12);
+  if (cho) { parts.push(`${compactNumber(cho)}兆`); n -= cho * 1e12; }
+
+  const oku = Math.floor(n / 1e8);
+  if (oku) { parts.push(`${compactNumber(oku)}億`); n -= oku * 1e8; }
+
+  const man = Math.floor(n / 1e4);
+  if (man) { parts.push(`${compactNumber(man)}万`); n -= man * 1e4; }
+
+  if (n > 0 || !parts.length) parts.push(compactNumber(n));
+  return sign + parts.join("");
+}
+
+let lastMain = "";
+let lastDetail = "";
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1400);
+}
+
+function convert() {
+  const input = document.getElementById("input").value.trim();
+  const result = document.getElementById("result");
+  const main = document.getElementById("mainResult");
+  const detail = document.getElementById("detail");
+  result.classList.remove("error");
+
+  if (!input) {
+    lastMain = "";
+    lastDetail = "";
+    main.textContent = "入力してください";
+    detail.textContent = "";
+    return;
+  }
+
+  let value = parseJapanese(input);
+  let direction = "jp";
+
+  if (value === null) {
+    value = parseEnglish(input);
+    direction = "en";
+  }
+  if (value === null) {
+    value = parsePlainNumber(input);
+    direction = "plain";
+  }
+
+  if (value === null || !Number.isFinite(value)) {
+    result.classList.add("error");
+    lastMain = "";
+    lastDetail = "";
+    main.textContent = "変換できませんでした";
+    detail.textContent = "例：8億、12億5000万、800 million、2.5 billion";
+    return;
+  }
+
+  const japanese = formatJapanese(value);
+  const english = formatEnglish(value);
+  const exact = value.toLocaleString("en-US", { maximumFractionDigits: 10 });
+
+  if (direction === "jp") lastMain = english;
+  else if (direction === "en") lastMain = japanese;
+  else lastMain = `${japanese} / ${english}`;
+
+  lastDetail = `${japanese} ＝ ${exact} ＝ ${english}`;
+  main.textContent = lastMain;
+  detail.textContent = lastDetail;
+}
+
+async function copyText(text) {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast("コピーしました");
+  } catch {
+    showToast("コピーできませんでした");
+  }
+}
+
+document.getElementById("convert").addEventListener("click", convert);
+document.getElementById("clear").addEventListener("click", () => {
+  document.getElementById("input").value = "";
+  convert();
+});
+document.getElementById("paste").addEventListener("click", async () => {
+  try {
+    document.getElementById("input").value = await navigator.clipboard.readText();
+    convert();
+  } catch {
+    showToast("貼り付けを許可してください");
+  }
+});
+document.getElementById("copyMain").addEventListener("click", () => copyText(lastMain));
+document.getElementById("copyDetail").addEventListener("click", () => copyText(lastDetail));
+
+document.querySelectorAll(".chip").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.getElementById("input").value = btn.dataset.example;
+    convert();
+  });
+});
+
+document.getElementById("input").addEventListener("input", convert);
+document.getElementById("input").addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") convert();
+});
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const voiceButton = document.getElementById("voice");
+if (SpeechRecognition) {
+  const recognition = new SpeechRecognition();
+  recognition.lang = "ja-JP";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  voiceButton.addEventListener("click", () => recognition.start());
+  recognition.onresult = e => {
+    document.getElementById("input").value = e.results[0][0].transcript;
+    convert();
+  };
+  recognition.onerror = () => showToast("音声入力を利用できませんでした");
+} else {
+  voiceButton.addEventListener("click", () => showToast("このブラウザでは音声入力に未対応です"));
+}
+
+
+</script>
+</body>
+</html>
